@@ -280,7 +280,7 @@ class MinecraftLauncher(QMainWindow):
     def play_offline(self):
         username = self.offline_username_input.text()
         if username:
-            account = {"access_token": "offline_mode", "username": username}
+            account = {"access_token": "offline_mode", "username": username, "id": str(uuid.uuid3(uuid.NAMESPACE_DNS, username))}
             self.accounts.append(account)
             self.save_accounts()
             self.show_main_page()
@@ -307,7 +307,7 @@ class MinecraftLauncher(QMainWindow):
                 "access_token": client.bearer_token,
             }
 
-            account = {"access_token": client.bearer_token, "username": self.login_data["name"]}
+            account = {"access_token": client.bearer_token, "username": self.login_data["name"], "id": profile_data['id']}
             print(account)
             self.accounts.append(account)
             self.save_accounts()
@@ -390,7 +390,7 @@ class MinecraftLauncher(QMainWindow):
             self.output_area.append(f"Starting game...")
             options = {
                 "username": selected_account["username"],
-                "uuid": str(uuid.uuid4()),
+                "uuid": selected_account.get("id", ""),
                 "token": selected_account.get("access_token", ""),
                 "directory": self.minecraft_directory
             }

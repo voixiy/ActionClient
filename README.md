@@ -6,9 +6,6 @@ Action Client is not a powerful, useless Minecraft launcher built with Python. I
 
 - **Shitty Interface:** Shitty and not simple interface for hard navigation and use.
 - **Multi-Version Support:** Launch any version of Minecraft effortlessly.
-- **Mod and Resource Pack Management:** Easily add and manage mods and resource packs.
-- **Customizable Profiles:** Create and save multiple profiles for different configurations.
-- **Fast Performance:** Optimized for speed and efficient resource usage.
 
 ## Requirements
 

@@ -61,7 +61,7 @@
      <x>265</x>
      <y>55</y>
      <width>232</width>
-     <height>37</height>
+     <height>32</height>
     </rect>
    </property>
    <property name="font">
@@ -72,6 +72,9 @@
    </property>
    <property name="styleSheet">
     <string notr="true">background-color:rgb(44, 44, 44);color: rgb(255, 255, 255);border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;</string>
+   </property>
+   <property name="lineWidth">
+    <number>0</number>
    </property>
    <property name="sizeAdjustPolicy">
     <enum>QAbstractScrollArea::AdjustIgnored</enum>

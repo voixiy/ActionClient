@@ -15,6 +15,7 @@ Action Client is not a powerful, useless Minecraft launcher built with Python. I
   - `PyQt5`
   - `mojang`
   - `requests`
+  - `PyGetWindow`
 
 ## Support
 

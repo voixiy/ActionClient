@@ -28,6 +28,7 @@ data = {
     },
     "version": ""
 }
+starting = False
 
 class Ui(QMainWindow):
     def __init__(self):
@@ -68,21 +69,39 @@ class Ui(QMainWindow):
         self.login_ui.findChild(QPushButton, 'Login_2').clicked.connect(self.play_offline)
         self.main_ui.findChild(QPushButton, 'v189').clicked.connect(self.switch_to_189)
         self.main_ui.findChild(QPushButton, 'v1122').clicked.connect(self.switch_to_1122)
+        self.login_ui.username.max_length = 20
+        self.login_ui.username.textChanged.connect(self.enforce_max_length)
+        self.main_ui.frame_2.hide()
+
+    def enforce_max_length(self):
+        text = self.login_ui.username.toPlainText()
+        if len(text) > self.login_ui.username.max_length:
+            self.login_ui.username.setPlainText(text[:self.login_ui.username.max_length])
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            event.ignore()
+        else:
+            super(Ui, self).keyPressEvent(event)
 
     def switch_to_login(self):
         self.stack.setCurrentWidget(self.login_ui)
 
     def switch_to_189(self):
-        global selected_version
-        selected_version = "1.8.9"
-        self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
-        self.savedata()
+        global starting, selected_version
+        if starting == False:
+            selected_version = "1.8.9"
+            self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
+            self.switch_to_main()
+            self.savedata()
     
     def switch_to_1122(self):
-        global selected_version
-        selected_version = "1.12.2"
-        self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
-        self.savedata()
+        global starting, selected_version
+        if starting == False:
+            selected_version = "1.12.2"
+            self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
+            self.switch_to_main()
+            self.savedata()
 
     def switch_to_main(self):
         global account
@@ -123,15 +142,18 @@ class Ui(QMainWindow):
             print(f"Failed to install Minecraft version: {e}")
 
     def launch_minecraft_threaded(self):
-        threading.Thread(target=self.start_minecraft).start()
+        global starting
+        if starting == False:
+            threading.Thread(target=self.start_minecraft).start()
 
     def start_minecraft(self):
-        global account, selected_version
+        global account, selected_version, starting
         if not account:
             self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
             return
         
-        self.main_ui.start_game.setText(f"STARTING {selected_version}")
+        self.main_ui.start_game.setText(f"LAUNCHING {selected_version}")
+        starting = True
         self.download_minecraft_version()
 
         options = {
@@ -153,7 +175,10 @@ class Ui(QMainWindow):
                 time.sleep(1)
         except:
             print("CANNOT LAUNCH MINECRAFT")
+            starting = False
+            self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
         
+        starting = False
         self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
 
 app = QApplication(sys.argv)

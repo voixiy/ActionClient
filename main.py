@@ -36,6 +36,7 @@ class Ui(QMainWindow):
         super(Ui, self).__init__()
         self.setWindowTitle("IT Client")
         self.setFixedSize(765, 443)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.init_ui()
 
     def init_ui(self):
@@ -63,6 +64,11 @@ class Ui(QMainWindow):
             selected_version = config.get("version")
             self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
 
+        if os.path.exists("customization\\default.json"):
+            with open("customization\\default.json", 'r') as f:
+                config = json.load(f)
+            self.apply_theme(config)
+
         self.main_ui.findChild(QPushButton, 'Profile').clicked.connect(self.switch_to_login)
         self.login_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
         self.main_ui.findChild(QPushButton, 'start_game').clicked.connect(self.launch_minecraft_threaded)
@@ -72,6 +78,11 @@ class Ui(QMainWindow):
         self.login_ui.username.max_length = 20
         self.login_ui.username.textChanged.connect(self.enforce_max_length)
         self.main_ui.frame_2.hide()
+        self.main_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
+        self.main_ui.hide.clicked.connect(self.window().showMinimized)
+        self.login_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
+        self.login_ui.hide.clicked.connect(self.window().showMinimized)
+        self.main_ui.Versions.hide()
 
     def enforce_max_length(self):
         text = self.login_ui.username.toPlainText()
@@ -134,6 +145,38 @@ class Ui(QMainWindow):
             loggedin = True
             self.savedata()
 
+    def apply_theme(self, theme_data):
+        try:
+            background_color = theme_data.get("background_color", "rgb(43, 43, 43)")
+            button_color = theme_data.get("button_color", "rgb(36, 157, 0)")
+            button_border_radius = theme_data.get("button_border_radius", "10px")
+            button_text_color = theme_data.get("button_text_color", "#ffffff")
+            title_bar_color = theme_data.get("title_bar_color", "rgb(74, 74, 74)")
+            title_bar_button_color = theme_data.get("title_bar_button_color", "white")
+            logo_color = theme_data.get("logo_color", "white")
+            profile_button_color = theme_data.get("profile_button_color", "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb(130, 130, 130), stop:1 rgb(171, 171, 171))")
+            profile_button_text_color = theme_data.get("profile_button_text_color", "white")
+
+            self.main_ui.setStyleSheet(f"background-color: {background_color};")
+            self.login_ui.setStyleSheet(f"background-color: {background_color};")
+            self.main_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
+            self.main_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.main_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.main_ui.Title.setStyleSheet(f"color: {logo_color}")
+            self.main_ui.Profile.setStyleSheet(f"background-color: {profile_button_color}; border-radius: {button_border_radius}; color: {profile_button_text_color}")
+            self.main_ui.Home_Button.setStyleSheet(f"color: {logo_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px")
+            self.main_ui.Version_button.setStyleSheet(f"color: {logo_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px")
+            self.main_ui.frame.setStyleSheet(f"background-color: {logo_color}")
+            self.main_ui.frame_2.setStyleSheet(f"background-color: {logo_color}")
+            self.login_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
+            self.login_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.login_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.main_ui.start_game.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
+            self.login_ui.Login_2.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
+            print("Theme applied successfully")
+        except Exception as e:
+            print(f"Failed to apply theme: {e}")
+
     def download_minecraft_version(self):
         global selected_version
         try:
@@ -152,9 +195,14 @@ class Ui(QMainWindow):
             self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
             return
         
-        self.main_ui.start_game.setText(f"LAUNCHING {selected_version}")
+        self.main_ui.start_game.setText(f"INSTALLING {selected_version}")
         starting = True
-        self.download_minecraft_version()
+        try:
+            self.download_minecraft_version()
+        except:
+            print("CANNOT INSTALL MINECRAFT")
+
+        self.main_ui.start_game.setText(f"LAUNCHING {selected_version}")
 
         options = {
             "username": account.get("username", "guest"),
@@ -165,21 +213,17 @@ class Ui(QMainWindow):
 
         minecraft_command = minecraft_launcher_lib.command.get_minecraft_command(selected_version, self.minecraft_directory, options)
         try:
-            process = subprocess.Popen(minecraft_command, cwd=self.minecraft_directory)
-            while True:
-                minecraft_windows = gw.getWindowsWithTitle("Minecraft 1.8.9")
-                if minecraft_windows:
-                    minecraft_window = minecraft_windows[0]
-                    minecraft_window.setTitle("IT Client | 0.13")
-                    break
-                time.sleep(1)
+            process = subprocess.run(minecraft_command, cwd=self.minecraft_directory)
+            self.hide()
         except:
             print("CANNOT LAUNCH MINECRAFT")
             starting = False
             self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
+            self.show()
         
         starting = False
         self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
+        self.show()
 
 app = QApplication(sys.argv)
 window = Ui()

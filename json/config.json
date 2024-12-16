@@ -1,1 +1,8 @@
-
+{
+    "account": {
+        "access_token": "",
+        "username": "",
+        "id": ""
+    },
+    "version": ""
+}

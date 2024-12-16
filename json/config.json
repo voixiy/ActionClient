@@ -1,8 +1,4 @@
 {
-    "account": {
-        "access_token": "",
-        "username": "",
-        "id": ""
-    },
+    "account": {},
     "version": "1.8.9"
 }

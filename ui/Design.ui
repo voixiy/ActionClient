@@ -274,44 +274,6 @@ QPushButton {
     </property>
    </widget>
   </widget>
-  <widget class="QFrame" name="frame">
-   <property name="geometry">
-    <rect>
-     <x>141</x>
-     <y>36</y>
-     <width>34</width>
-     <height>1</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: white</string>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::StyledPanel</enum>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Raised</enum>
-   </property>
-  </widget>
-  <widget class="QFrame" name="frame_2">
-   <property name="geometry">
-    <rect>
-     <x>200</x>
-     <y>36</y>
-     <width>34</width>
-     <height>1</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background-color: white</string>
-   </property>
-   <property name="frameShape">
-    <enum>QFrame::StyledPanel</enum>
-   </property>
-   <property name="frameShadow">
-    <enum>QFrame::Raised</enum>
-   </property>
-  </widget>
  </widget>
  <resources/>
  <connections>
@@ -376,70 +338,6 @@ QPushButton {
     <hint type="destinationlabel">
      <x>415</x>
      <y>247</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Home_Button</sender>
-   <signal>clicked()</signal>
-   <receiver>frame</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>157</x>
-     <y>27</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>36</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Version_button</sender>
-   <signal>clicked()</signal>
-   <receiver>frame</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>217</x>
-     <y>28</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>36</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Version_button</sender>
-   <signal>clicked()</signal>
-   <receiver>frame_2</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>217</x>
-     <y>28</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>216</x>
-     <y>36</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>Home_Button</sender>
-   <signal>clicked()</signal>
-   <receiver>frame_2</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>157</x>
-     <y>27</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>216</x>
-     <y>36</y>
     </hint>
    </hints>
   </connection>

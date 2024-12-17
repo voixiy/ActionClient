@@ -7,5 +7,7 @@
     "title_bar_button_color": "white",
     "profile_button_color": "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb(130, 130, 130), stop:1 rgb(171, 171, 171))",
     "profile_button_text_color": "white",
-    "logo_color": "white"
+    "logo_color": "white",
+    "settings_item_background_color": "rgb(36, 36, 36)",
+    "settings_item_text_color": "white"
 }

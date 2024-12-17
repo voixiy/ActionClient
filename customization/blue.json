@@ -1,0 +1,13 @@
+{
+    "background_color": "#282C34",
+    "button_color": "#61AFEF",
+    "button_text_color": "white",
+    "button_border_radius": "10px",
+    "title_bar_color": "#05000f",
+    "title_bar_button_color": "white",
+    "profile_button_color": "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #4d07e3, stop:1 #d107e3)",
+    "profile_button_text_color": "white",
+    "logo_color": "white",
+    "settings_item_background_color": "#1b1e24",
+    "settings_item_text_color": "white"
+}

@@ -1,4 +1,8 @@
 {
     "account": {},
+    "settings": {
+        "hide_window_when_startup": "true",
+        "theme": ""
+    },
     "version": "1.8.9"
 }

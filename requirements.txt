@@ -3,3 +3,6 @@ mojang==1.1.0
 PyGetWindow==0.0.9
 requests==2.32.3
 PyQt5==5.15.9
+pypresence==4.3.0
+msal==1.31.1
+pywin32-ctypes==0.2.3

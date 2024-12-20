@@ -1,8 +1,5 @@
 {
     "account": {},
-    "settings": {
-        "hide_window_when_startup": "true",
-        "theme": "C:/Users/dell/Documents/Python/Action Client/customization/blue.json"
-    },
+    "settings": {},
     "version": "1.8.9"
 }

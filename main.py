@@ -11,16 +11,23 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtMultimedia import *
 import requests
-from mojang import *
+from msal import PublicClientApplication
 import minecraft_launcher_lib
 import webbrowser
 import pygetwindow as gw
 import time
 import ctypes
+from pypresence import Presence
+from mojang import *
 
+client_id = '33c92eaa-f60a-46b6-83b2-1d1713f0216b'
+TENANT_ID = '6f730e5c-e17b-4434-8d56-f3faa97bfda7'
+authority = f"https://login.microsoftonline.com/{TENANT_ID}"
+SCOPES = ["https://graph.microsoft.com/.default"]
 selected_version = "1.8.9"
 loggedin = False
 account = {}
+CLIENT_ID = "1318959471338459198"
 data = {
     "account": {
         "access_token": "",
@@ -36,6 +43,21 @@ data = {
 starting = False
 hide_window_on_startup = "true"
 file_name = ""
+
+try:
+    rpc = Presence(CLIENT_ID)
+    rpc.connect()
+
+    rpc.update(
+        details="Playing Minecraft",
+        large_image="icon",
+        large_text="IT Client",
+        small_image="code",
+        small_text="Playing Minecraft",
+        start=time.time()
+    )
+except:
+    print("Could not find discord installed and running on this machine")
 
 class Ui(QMainWindow):
     def __init__(self):
@@ -64,6 +86,14 @@ class Ui(QMainWindow):
         self.settings_ui = QMainWindow()
         uic.loadUi('ui\\Settings.ui', self.settings_ui)
         self.stack.addWidget(self.settings_ui)
+
+        self.offline_ui = QMainWindow()
+        uic.loadUi('ui\\Offline.ui', self.offline_ui)
+        self.stack.addWidget(self.offline_ui)
+
+        self.microsoft_ui = QMainWindow()
+        uic.loadUi('ui\\Microsoft.ui', self.microsoft_ui)
+        self.stack.addWidget(self.microsoft_ui)
 
         if os.path.exists("json\\config.json"):
             with open("json\\config.json", 'r') as f:
@@ -95,12 +125,17 @@ class Ui(QMainWindow):
         self.main_ui.findChild(QPushButton, 'Profile').clicked.connect(self.switch_to_login)
         self.settings_ui.findChild(QPushButton, 'Profile').clicked.connect(self.switch_to_login)
         self.login_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
+        self.offline_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
+        self.microsoft_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
         self.main_ui.findChild(QPushButton, 'start_game').clicked.connect(self.launch_minecraft_threaded)
-        self.login_ui.findChild(QPushButton, 'Login_2').clicked.connect(self.play_offline)
+        self.login_ui.findChild(QPushButton, 'offline').clicked.connect(self.switch_to_offline)
+        self.login_ui.findChild(QPushButton, 'microsoft').clicked.connect(self.switch_to_microsoft)
+        self.login_ui.findChild(QPushButton, 'microsoft').clicked.connect(self.play_with_microsoft_threaded)
+        self.offline_ui.findChild(QPushButton, 'Login_2').clicked.connect(self.play_offline)
         self.main_ui.findChild(QPushButton, 'v189').clicked.connect(self.switch_to_189)
         self.main_ui.findChild(QPushButton, 'v1122').clicked.connect(self.switch_to_1122)
-        self.login_ui.username.max_length = 20
-        self.login_ui.username.textChanged.connect(self.enforce_max_length)
+        self.offline_ui.username.max_length = 20
+        self.offline_ui.username.textChanged.connect(self.enforce_max_length)
         self.main_ui.frame_2.hide()
         self.main_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
         self.main_ui.hide.clicked.connect(self.window().showMinimized)
@@ -108,6 +143,10 @@ class Ui(QMainWindow):
         self.login_ui.hide.clicked.connect(self.window().showMinimized)
         self.settings_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
         self.settings_ui.hide.clicked.connect(self.window().showMinimized)
+        self.offline_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
+        self.offline_ui.hide.clicked.connect(self.window().showMinimized)
+        self.microsoft_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
+        self.microsoft_ui.hide.clicked.connect(self.window().showMinimized)
         self.main_ui.Versions.hide()
         self.main_ui.Settings_button.clicked.connect(self.switch_to_settings)
         self.settings_ui.Home_Button_2.clicked.connect(self.switch_to_main_home)
@@ -124,9 +163,9 @@ class Ui(QMainWindow):
             self.settings_ui.hide_window_button.setText("Disabled")
 
     def enforce_max_length(self):
-        text = self.login_ui.username.toPlainText()
-        if len(text) > self.login_ui.username.max_length:
-            self.login_ui.username.setPlainText(text[:self.login_ui.username.max_length])
+        text = self.offline_ui.username.toPlainText()
+        if len(text) > self.offline_ui.username.max_length:
+            self.offline_ui.username.setPlainText(text[:self.offline_ui.username.max_length])
 
     def enable_disable_hide_window(self):
         global hide_window_on_startup
@@ -147,6 +186,12 @@ class Ui(QMainWindow):
 
     def switch_to_settings(self):
         self.stack.setCurrentWidget(self.settings_ui)
+
+    def switch_to_offline(self):
+        self.stack.setCurrentWidget(self.offline_ui)
+
+    def switch_to_microsoft(self):
+        self.stack.setCurrentWidget(self.microsoft_ui)
 
     def switch_to_189(self):
         global starting, selected_version
@@ -194,6 +239,33 @@ class Ui(QMainWindow):
         if username:
             self.main_ui.Profile.setText(f"Hello, {username}")
 
+    def play_with_microsoft(self):
+        global account, data
+        app = PublicClientApplication(client_id, authority=authority)
+
+        device_flow = app.initiate_device_flow(scopes=["User.Read"])
+        if "user_code" not in device_flow:
+            raise ValueError("Failed to create device flow. Check app registration.")
+
+        print(f"Go to {device_flow['verification_uri']} and enter the code: {device_flow['user_code']}")
+        self.microsoft_ui.title_2.setText(f"Code: {device_flow['user_code']}")
+        webbrowser.open(device_flow['verification_uri'])
+
+        result = app.acquire_token_by_device_flow(device_flow)
+
+        if "access_token" in result:
+            access_token = result["access_token"]
+            client = Client(bearer_token=access_token)
+            headers = {
+                "Authorization": f"Bearer {access_token}"
+            }
+            profile = client.get_profile()
+            account = {"access_token": access_token, "username": profile.name, "id": profile.id}
+            self.switch_to_main()
+            self.savedata()
+        else:
+            print("Authentication failed:", result.get("error_description"))
+
     def savedata(self):
         global selected_version, account, hide_window_on_startup, file_name
         print("SAVING CONFIG")
@@ -215,7 +287,7 @@ class Ui(QMainWindow):
 
     def play_offline(self):
         global account, data
-        username = self.login_ui.findChild(QTextEdit, 'username').toPlainText()
+        username = self.offline_ui.findChild(QTextEdit, 'username').toPlainText()
         if username:
             account = {"access_token": "offline_mode", "username": username, "id": str(uuid.uuid3(uuid.NAMESPACE_DNS, username))}
             self.switch_to_main()
@@ -239,10 +311,14 @@ class Ui(QMainWindow):
             self.main_ui.setStyleSheet(f"background-color: {background_color};")
             self.login_ui.setStyleSheet(f"background-color: {background_color};")
             self.settings_ui.setStyleSheet(f"background-color: {background_color};")
+            self.offline_ui.setStyleSheet(f"background-color: {background_color};")
+            self.microsoft_ui.setStyleSheet(f"background-color: {background_color};")
             self.main_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
             self.main_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.main_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.main_ui.Title.setStyleSheet(f"color: {logo_color}")
+            self.microsoft_ui.title.setStyleSheet(f"color: {logo_color}")
+            self.offline_ui.title.setStyleSheet(f"color: {logo_color}")
             self.main_ui.Profile.setStyleSheet(f"background-color: {profile_button_color}; border-radius: {button_border_radius}; color: {profile_button_text_color}")
             self.main_ui.Home_Button.setStyleSheet(f"color: {logo_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px")
             self.main_ui.Version_button.setStyleSheet(f"color: {logo_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px")
@@ -251,10 +327,16 @@ class Ui(QMainWindow):
             self.login_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
             self.login_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.login_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.offline_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
+            self.offline_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.offline_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.microsoft_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
+            self.microsoft_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.microsoft_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.main_ui.start_game.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.main_ui.v189.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.main_ui.v1122.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
-            self.login_ui.Login_2.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
+            self.offline_ui.Login_2.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.settings_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
             self.settings_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.settings_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
@@ -296,14 +378,17 @@ class Ui(QMainWindow):
         global starting
         if starting == False:
             threading.Thread(target=self.start_minecraft).start()
+    
+    def play_with_microsoft_threaded(self):
+        threading.Thread(target=self.play_with_microsoft).start()
 
     def change_window_name(self):
         while True:
             minecraft_windows = gw.getWindowsWithTitle("Minecraft 1.8.9") or gw.getWindowsWithTitle("Minecraft 1.12.2")
             if minecraft_windows:
                 minecraft_window = minecraft_windows[0]
-                hwnd = minecraft_window._hWnd  # Get the window handle
-                ctypes.windll.user32.SetWindowTextW(hwnd, "IT Client | 0.13")
+                hwnd = minecraft_window._hWndSYTWHUYH2YFU
+                ctypes.windll.user32.SetWindowTextW(hwnd, "IT Client | v0.3-alpha")
                 break
             time.sleep(1)
 

@@ -41,6 +41,7 @@ data = {
     "version": ""
 }
 starting = False
+notplayed = False
 hide_window_on_startup = "true"
 file_name = ""
 
@@ -72,6 +73,22 @@ class Ui(QMainWindow):
         global selected_version, account, hide_window_on_startup, file_name
         self.stack = QStackedWidget(self)
         self.setCentralWidget(self.stack)
+
+        self.player = QMediaPlayer()
+        self.player.stateChanged.connect(self.update_button_icon)
+        self.player.mediaStatusChanged.connect(self.check_media_status)
+
+        self.songs = {
+            'jnhygs, 9lives - JERK!': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmTytIUDUzSlUwZ0xEU0s3bEQ2dmtPcEZvYllwK0ZHOHd0aUoySHpHdlZHTU83amxJZzNaV09wK3Z6YUFhT1Q4dVQ5eTZjUlc2ZUhxMEdYOWVUR1lWYnc9/jnhygs_-_JERK_prod._9lives_(Hydr0.org).mp3',
+            'Baby Tate - Hey Mickey': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmSHJzTkYra00rM3BxRXZtaDBnR1JHQ05BTWI3ZDVJQ2VOZ1lndVMwZjhRNmh3S2lKZEVwM2F5b2IvdUp5Y2diK0VodytLVGY2OFIwY0RBeGxZL2NacDQ9/Baby_Tate_-_Hey_Mickey_prod._by_deadhead_(Hydr0.org).mp3',
+            'VANO 3000 - Running Away': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmSHJzTkYra00rM3BxRXZtaDBnR1JHQ05BTWI3ZDVJQ2VOZ1lndVMwZjhRNnNaMXpxK2sxOVlqQnNZK0dFZ2l5aHI1ZzB1UEhqNVZhZnBNbE5pRGJoRE09/VANO_3000_-_Running_Away_Vocal_Remix_(Hydr0.org).mp3',
+            'Oderati, 6arelyhuman - GMFU': 'https://dl2.mp3party.net/online/10870802.mp3',
+            'KSI - Sick of it': "https://dl2.mp3party.net/online/11171382.mp3",
+            'Eminem - Godzilla': 'https://dl2.mp3party.net/online/9201529.mp3',
+            'Ghostemane - Mercury': 'https://dl2.mp3party.net/online/8571364.mp3',
+            'Tyler, The Creator - Rah Tah Tah': 'https://dl2.mp3party.net/online/11187685.mp3',
+            'alt! - RAHHHH': 'mp3uk.net/mp3/files/alt-rahhhh-mp3.mp3'
+        }
 
         self.main_ui = QMainWindow()
         uic.loadUi('ui\\Design.ui', self.main_ui)
@@ -153,6 +170,56 @@ class Ui(QMainWindow):
         self.settings_ui.Version_button.clicked.connect(self.switch_to_main_versions)
         self.settings_ui.theme_button.clicked.connect(self.load_skin)
         self.settings_ui.hide_window_button.clicked.connect(self.hide_window)
+        self.main_ui.skip.clicked.connect(self.play_random_song)
+        self.main_ui.previous.clicked.connect(self.play_random_song)
+        self.main_ui.play.setIcon(QIcon("ui/resources/play.png"))
+        self.main_ui.skip.setIcon(QIcon("ui/resources/end.png"))
+        self.main_ui.previous.setIcon(QIcon("ui/resources/skip_to_start.png"))
+        self.main_ui.play.clicked.connect(self.toggle_play_pause)
+        self.settings_ui.skip.clicked.connect(self.play_random_song)
+        self.settings_ui.previous.clicked.connect(self.play_random_song)
+        self.settings_ui.play.setIcon(QIcon("ui/resources/play.png"))
+        self.settings_ui.skip.setIcon(QIcon("ui/resources/end.png"))
+        self.settings_ui.previous.setIcon(QIcon("ui/resources/skip_to_start.png"))
+        self.settings_ui.play.clicked.connect(self.toggle_play_pause)
+
+        self.shortcut = QShortcut(QKeySequence("Ctrl+E"), self)
+        self.shortcut.activated.connect(self.toggle_play_pause)
+
+        self.shortcut2 = QShortcut(QKeySequence("Ctrl+Q"), self)
+        self.shortcut2.activated.connect(self.play_random_song)
+
+    def play_random_song(self):
+        global notplayed
+        song_name, song_url = random.choice(list(self.songs.items()))
+        url = QUrl(song_url)
+        content = QMediaContent(url)
+        self.player.setMedia(content)
+        self.player.play()
+        self.main_ui.songname.setText(song_name)
+        self.settings_ui.songname.setText(song_name)
+        notplayed = True
+
+    def toggle_play_pause(self):
+        global notplayed
+        if self.player.state() == QMediaPlayer.PlayingState:
+            self.player.pause()
+        else:
+            self.player.play()
+        if notplayed == False:
+            self.play_random_song()
+
+    def update_button_icon(self, state):
+        if state == QMediaPlayer.PlayingState:
+            self.main_ui.play.setIcon(QIcon("ui/resources/pause.png"))
+            self.settings_ui.play.setIcon(QIcon("ui/resources/pause.png"))
+        else:
+            self.main_ui.play.setIcon(QIcon("ui/resources/play.png"))
+            self.settings_ui.play.setIcon(QIcon("ui/resources/play.png"))
+
+    def check_media_status(self, status):
+        if status == QMediaPlayer.EndOfMedia:
+            self.play_random_song()
 
     def hide_window(self):
         if hide_window_on_startup == "true":
@@ -259,10 +326,13 @@ class Ui(QMainWindow):
             headers = {
                 "Authorization": f"Bearer {access_token}"
             }
-            profile = client.get_profile()
-            account = {"access_token": access_token, "username": profile.name, "id": profile.id}
+            try:
+                profile = client.get_profile()
+                account = {"access_token": access_token, "username": profile.name, "id": profile.id}
+                self.savedata()
+            except:
+                print("Can't get profile")
             self.switch_to_main()
-            self.savedata()
         else:
             print("Authentication failed:", result.get("error_description"))
 
@@ -334,6 +404,8 @@ class Ui(QMainWindow):
             self.microsoft_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.microsoft_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.main_ui.start_game.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
+            self.login_ui.microsoft.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
+            self.login_ui.offline.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.main_ui.v189.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.main_ui.v1122.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.offline_ui.Login_2.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
@@ -341,6 +413,8 @@ class Ui(QMainWindow):
             self.settings_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.settings_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.settings_ui.Title.setStyleSheet(f"color: {logo_color}")
+            self.settings_ui.songname.setStyleSheet(f"color: {logo_color}")
+            self.main_ui.songname.setStyleSheet(f"color: {logo_color}")
             self.settings_ui.Profile.setStyleSheet(f"background-color: {profile_button_color}; border-radius: {button_border_radius}; color: {profile_button_text_color}")
             self.settings_ui.Home_Button.setStyleSheet(f"color: {logo_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px")
             self.settings_ui.Version_button.setStyleSheet(f"color: {logo_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px")
@@ -393,7 +467,7 @@ class Ui(QMainWindow):
             time.sleep(1)
 
     def start_minecraft(self):
-        global account, selected_version, starting
+        global account, selected_version, starting, hide_window_on_startup
         if not account:
             self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
             return

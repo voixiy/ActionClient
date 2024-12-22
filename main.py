@@ -38,12 +38,14 @@ data = {
         "hide_window_when_startup": "",
         "theme": ""
     },
-    "version": ""
+    "version": "",
+    "playlist": 1
 }
 starting = False
 notplayed = False
 hide_window_on_startup = "true"
 file_name = ""
+playlist = 1
 
 try:
     rpc = Presence(CLIENT_ID)
@@ -70,7 +72,7 @@ class Ui(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        global selected_version, account, hide_window_on_startup, file_name
+        global selected_version, account, hide_window_on_startup, file_name, playlist
         self.stack = QStackedWidget(self)
         self.setCentralWidget(self.stack)
 
@@ -87,7 +89,7 @@ class Ui(QMainWindow):
             'Eminem - Godzilla': 'https://dl2.mp3party.net/online/9201529.mp3',
             'Ghostemane - Mercury': 'https://dl2.mp3party.net/online/8571364.mp3',
             'Tyler, The Creator - Rah Tah Tah': 'https://dl2.mp3party.net/online/11187685.mp3',
-            'alt! - RAHHHH': 'mp3uk.net/mp3/files/alt-rahhhh-mp3.mp3'
+            'alt! - RAHHHH': 'https://mp3uk.net/mp3/files/alt-rahhhh-mp3.mp3'
         }
 
         self.main_ui = QMainWindow()
@@ -112,6 +114,10 @@ class Ui(QMainWindow):
         uic.loadUi('ui\\Microsoft.ui', self.microsoft_ui)
         self.stack.addWidget(self.microsoft_ui)
 
+        self.playlists_ui = QMainWindow()
+        uic.loadUi('ui\\Playlists.ui', self.playlists_ui)
+        self.stack.addWidget(self.playlists_ui)
+
         if os.path.exists("json\\config.json"):
             with open("json\\config.json", 'r') as f:
                 config = json.load(f)
@@ -121,6 +127,15 @@ class Ui(QMainWindow):
                 username = account.get("username")
                 self.main_ui.Profile.setText(f"Hello, {username}")
                 self.settings_ui.Profile.setText(f"Hello, {username}")
+                try: 
+                    head_image_url = self.get_player_head_image(username)
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(requests.get(head_image_url).content)
+                    icon = QIcon(pixmap)
+                    self.main_ui.Profile.setIcon(icon)
+                    self.settings_ui.Profile.setIcon(icon)
+                except:
+                    print("No connection")
             selected_version = config.get("version")
             self.main_ui.start_game.setText(f"LAUNCH {selected_version}")
             theme_path = settings_config.get("theme", "")
@@ -138,12 +153,34 @@ class Ui(QMainWindow):
             else:
                 self.settings_ui.hide_window_button.setText("Disabled")
             file_name = settings_config.get("theme")
+            if config.get("playlist", 1) == 1:
+                self.songs = {
+                    'jnhygs, 9lives - JERK!': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmTytIUDUzSlUwZ0xEU0s3bEQ2dmtPcEZvYllwK0ZHOHd0aUoySHpHdlZHTU83amxJZzNaV09wK3Z6YUFhT1Q4dVQ5eTZjUlc2ZUhxMEdYOWVUR1lWYnc9/jnhygs_-_JERK_prod._9lives_(Hydr0.org).mp3',
+                    'Baby Tate - Hey Mickey': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmSHJzTkYra00rM3BxRXZtaDBnR1JHQ05BTWI3ZDVJQ2VOZ1lndVMwZjhRNmh3S2lKZEVwM2F5b2IvdUp5Y2diK0VodytLVGY2OFIwY0RBeGxZL2NacDQ9/Baby_Tate_-_Hey_Mickey_prod._by_deadhead_(Hydr0.org).mp3',
+                    'VANO 3000 - Running Away': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmSHJzTkYra00rM3BxRXZtaDBnR1JHQ05BTWI3ZDVJQ2VOZ1lndVMwZjhRNnNaMXpxK2sxOVlqQnNZK0dFZ2l5aHI1ZzB1UEhqNVZhZnBNbE5pRGJoRE09/VANO_3000_-_Running_Away_Vocal_Remix_(Hydr0.org).mp3',
+                    'Oderati, 6arelyhuman - GMFU': 'https://dl2.mp3party.net/online/10870802.mp3',
+                    'KSI - Sick of it': "https://dl2.mp3party.net/online/11171382.mp3",
+                    'Eminem - Godzilla': 'https://dl2.mp3party.net/online/9201529.mp3',
+                    'Ghostemane - Mercury': 'https://dl2.mp3party.net/online/8571364.mp3',
+                    'Tyler, The Creator - Rah Tah Tah': 'https://dl2.mp3party.net/online/11187685.mp3',
+                    'alt! - RAHHHH': 'https://mp3uk.net/mp3/files/alt-rahhhh-mp3.mp3'
+                }
+            elif config.get("playlist", 1) == 2:
+                self.songs = {
+                    'MF DOOM - Doomsday': 'https://dl2.mp3party.net/online/8739037.mp3',
+                    'narpy - so far away': 'https://ia801608.us.archive.org/27/items/soundcloud-1341492589/1341492589.mp3',
+                    'narpy - cherry blossoms': 'https://ia801608.us.archive.org/27/items/soundcloud-1280029051/1280029051.mp3',
+                    'LAKEY INSPIRED - Blue Boi': 'https://happysoulmusic.com/wp-content/grand-media/audio/Lakey-Inspired-Blue-Boi.mp3',
+                    'Domknowz - Lofi': "https://dl2.mp3party.net/online/10299262.mp3",
+                    'Closed on saturday - animal crossing new horizons lofi': 'https://rildi.sunproxy.net/file/bWZVZG9jcU9tREpWU3hRSE5GZmFCaHJXa1F4UXhtV3MvY0pvWjM0SlpDeWFsVjZBeUVOMGFsK3JNbGRHWitVb0F3ZGIxRXphWVpwdUwzRm92TW1LeFpzMEFneWpEdzVZalFadVVrbDM4elE9/Unknown_-_animal_crossing_new_horizons_lofi_(Hydr0.org).mp3'
+                }
 
         self.main_ui.findChild(QPushButton, 'Profile').clicked.connect(self.switch_to_login)
         self.settings_ui.findChild(QPushButton, 'Profile').clicked.connect(self.switch_to_login)
         self.login_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
         self.offline_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
         self.microsoft_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
+        self.playlists_ui.findChild(QPushButton, 'back').clicked.connect(self.switch_to_main)
         self.main_ui.findChild(QPushButton, 'start_game').clicked.connect(self.launch_minecraft_threaded)
         self.login_ui.findChild(QPushButton, 'offline').clicked.connect(self.switch_to_offline)
         self.login_ui.findChild(QPushButton, 'microsoft').clicked.connect(self.switch_to_microsoft)
@@ -164,6 +201,8 @@ class Ui(QMainWindow):
         self.offline_ui.hide.clicked.connect(self.window().showMinimized)
         self.microsoft_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
         self.microsoft_ui.hide.clicked.connect(self.window().showMinimized)
+        self.playlists_ui.findChild(QPushButton, 'close').clicked.connect(self.close)
+        self.playlists_ui.hide.clicked.connect(self.window().showMinimized)
         self.main_ui.Versions.hide()
         self.main_ui.Settings_button.clicked.connect(self.switch_to_settings)
         self.settings_ui.Home_Button_2.clicked.connect(self.switch_to_main_home)
@@ -182,12 +221,21 @@ class Ui(QMainWindow):
         self.settings_ui.skip.setIcon(QIcon("ui/resources/end.png"))
         self.settings_ui.previous.setIcon(QIcon("ui/resources/skip_to_start.png"))
         self.settings_ui.play.clicked.connect(self.toggle_play_pause)
+        self.main_ui.Profile.setIcon(QIcon("ui/resources/guest.png"))
+        self.settings_ui.Profile.setIcon(QIcon("ui/resources/guest.png"))
+        self.main_ui.background.icon = QPixmap("ui/resources/background.png")
 
         self.shortcut = QShortcut(QKeySequence("Ctrl+E"), self)
         self.shortcut.activated.connect(self.toggle_play_pause)
 
         self.shortcut2 = QShortcut(QKeySequence("Ctrl+Q"), self)
         self.shortcut2.activated.connect(self.play_random_song)
+
+        self.playlists_ui.aggressive.clicked.connect(self.change_playlist_1)
+        self.playlists_ui.chill.clicked.connect(self.change_playlist_2)
+
+        self.main_ui.playlists.clicked.connect(self.switch_to_playlists)
+        self.settings_ui.playlists.clicked.connect(self.switch_to_playlists)
 
     def play_random_song(self):
         global notplayed
@@ -199,6 +247,37 @@ class Ui(QMainWindow):
         self.main_ui.songname.setText(song_name)
         self.settings_ui.songname.setText(song_name)
         notplayed = True
+    
+    def change_playlist_1(self):
+        global playlist
+        playlist = 1
+        self.songs = {
+            'jnhygs, 9lives - JERK!': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmTytIUDUzSlUwZ0xEU0s3bEQ2dmtPcEZvYllwK0ZHOHd0aUoySHpHdlZHTU83amxJZzNaV09wK3Z6YUFhT1Q4dVQ5eTZjUlc2ZUhxMEdYOWVUR1lWYnc9/jnhygs_-_JERK_prod._9lives_(Hydr0.org).mp3',
+            'Baby Tate - Hey Mickey': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmSHJzTkYra00rM3BxRXZtaDBnR1JHQ05BTWI3ZDVJQ2VOZ1lndVMwZjhRNmh3S2lKZEVwM2F5b2IvdUp5Y2diK0VodytLVGY2OFIwY0RBeGxZL2NacDQ9/Baby_Tate_-_Hey_Mickey_prod._by_deadhead_(Hydr0.org).mp3',
+            'VANO 3000 - Running Away': 'https://rildi.sunproxy.net/file/T2haZld6QlROcWNYcU93VmhhNnJmSHJzTkYra00rM3BxRXZtaDBnR1JHQ05BTWI3ZDVJQ2VOZ1lndVMwZjhRNnNaMXpxK2sxOVlqQnNZK0dFZ2l5aHI1ZzB1UEhqNVZhZnBNbE5pRGJoRE09/VANO_3000_-_Running_Away_Vocal_Remix_(Hydr0.org).mp3',
+            'Oderati, 6arelyhuman - GMFU': 'https://dl2.mp3party.net/online/10870802.mp3',
+            'KSI - Sick of it': 'https://dl2.mp3party.net/online/11171382.mp3',
+            'Eminem - Godzilla': 'https://dl2.mp3party.net/online/9201529.mp3',
+            'Ghostemane - Mercury': 'https://dl2.mp3party.net/online/8571364.mp3',
+            'Tyler, The Creator - Rah Tah Tah': 'https://dl2.mp3party.net/online/11187685.mp3',
+            'alt! - RAHHHH': 'https://mp3uk.net/mp3/files/alt-rahhhh-mp3.mp3'
+        }
+        self.switch_to_main()
+        self.savedata()
+    
+    def change_playlist_2(self):
+        global playlist
+        playlist = 2
+        self.songs = {
+            'MF DOOM - Doomsday': 'https://dl2.mp3party.net/online/8739037.mp3',
+            'narpy - so far away': 'https://ia801608.us.archive.org/27/items/soundcloud-1341492589/1341492589.mp3',
+            'narpy - cherry blossoms': 'https://ia801608.us.archive.org/27/items/soundcloud-1280029051/1280029051.mp3',
+            'LAKEY INSPIRED - Blue Boi': 'https://happysoulmusic.com/wp-content/grand-media/audio/Lakey-Inspired-Blue-Boi.mp3',
+            'Domknowz - Lofi': "https://dl2.mp3party.net/online/10299262.mp3",
+            'Closed on saturday - animal crossing new horizons lofi': 'https://rildi.sunproxy.net/file/bWZVZG9jcU9tREpWU3hRSE5GZmFCaHJXa1F4UXhtV3MvY0pvWjM0SlpDeWFsVjZBeUVOMGFsK3JNbGRHWitVb0F3ZGIxRXphWVpwdUwzRm92TW1LeFpzMEFneWpEdzVZalFadVVrbDM4elE9/Unknown_-_animal_crossing_new_horizons_lofi_(Hydr0.org).mp3'
+        }
+        self.switch_to_main()
+        self.savedata()
 
     def toggle_play_pause(self):
         global notplayed
@@ -242,6 +321,16 @@ class Ui(QMainWindow):
         else:
             hide_window_on_startup = "true"
 
+    def get_player_head_image(self, username):
+        response = requests.get(f"https://api.mojang.com/users/profiles/minecraft/{username}")
+        if response.status_code == 200:
+            player_data = response.json()
+            uuid = player_data['id']
+            head_image_url = f"https://crafatar.com/renders/head/{uuid}?size=100&overlay"
+            return head_image_url
+        else:
+            return None
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Return, Qt.Key_Enter):
             event.ignore()
@@ -250,6 +339,9 @@ class Ui(QMainWindow):
 
     def switch_to_login(self):
         self.stack.setCurrentWidget(self.login_ui)
+
+    def switch_to_playlists(self):
+        self.stack.setCurrentWidget(self.playlists_ui)
 
     def switch_to_settings(self):
         self.stack.setCurrentWidget(self.settings_ui)
@@ -329,6 +421,12 @@ class Ui(QMainWindow):
             try:
                 profile = client.get_profile()
                 account = {"access_token": access_token, "username": profile.name, "id": profile.id}
+                head_image_url = self.get_player_head_image(profile.name)
+                pixmap = QPixmap()
+                pixmap.loadFromData(requests.get(head_image_url).content)
+                icon = QIcon(pixmap)
+                self.main_ui.Profile.setIcon(icon)
+                self.settings_ui.Profile.setIcon(icon)
                 self.savedata()
             except:
                 print("Can't get profile")
@@ -337,7 +435,7 @@ class Ui(QMainWindow):
             print("Authentication failed:", result.get("error_description"))
 
     def savedata(self):
-        global selected_version, account, hide_window_on_startup, file_name
+        global selected_version, account, hide_window_on_startup, file_name, playlist
         print("SAVING CONFIG")
         data = {
             "account": account,
@@ -345,7 +443,8 @@ class Ui(QMainWindow):
                 "hide_window_when_startup": hide_window_on_startup,
                 "theme": file_name
             },
-            "version": selected_version
+            "version": selected_version,
+            "playlist": playlist
         }
         try:
             with open("json\\config.json", 'w') as f:
@@ -360,6 +459,12 @@ class Ui(QMainWindow):
         username = self.offline_ui.findChild(QTextEdit, 'username').toPlainText()
         if username:
             account = {"access_token": "offline_mode", "username": username, "id": str(uuid.uuid3(uuid.NAMESPACE_DNS, username))}
+            head_image_url = self.get_player_head_image(username)
+            pixmap = QPixmap()
+            pixmap.loadFromData(requests.get(head_image_url).content)
+            icon = QIcon(pixmap)
+            self.main_ui.Profile.setIcon(icon)
+            self.settings_ui.Profile.setIcon(icon)
             self.switch_to_main()
             loggedin = True
             self.savedata()
@@ -372,7 +477,8 @@ class Ui(QMainWindow):
             button_text_color = theme_data.get("button_text_color", "#ffffff")
             title_bar_color = theme_data.get("title_bar_color", "rgb(74, 74, 74)")
             title_bar_button_color = theme_data.get("title_bar_button_color", "white")
-            logo_color = theme_data.get("logo_color", "white")
+            logo_color = theme_data.get("text_color", "white")
+            frame_color = theme_data.get("frame_color", "rgb(59, 59, 59)")
             profile_button_color = theme_data.get("profile_button_color", "qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb(130, 130, 130), stop:1 rgb(171, 171, 171))")
             profile_button_text_color = theme_data.get("profile_button_text_color", "white")
             settings_item_background_color = theme_data.get("settings_item_background_color", "rgb(36, 36, 36)")
@@ -383,6 +489,7 @@ class Ui(QMainWindow):
             self.settings_ui.setStyleSheet(f"background-color: {background_color};")
             self.offline_ui.setStyleSheet(f"background-color: {background_color};")
             self.microsoft_ui.setStyleSheet(f"background-color: {background_color};")
+            self.playlists_ui.setStyleSheet(f"background-color: {background_color};")
             self.main_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
             self.main_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.main_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
@@ -403,6 +510,9 @@ class Ui(QMainWindow):
             self.microsoft_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
             self.microsoft_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.microsoft_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.playlists_ui.titlebar.setStyleSheet(f"background-color: {title_bar_color};")
+            self.playlists_ui.hide.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
+            self.playlists_ui.close.setStyleSheet(f"color: {title_bar_button_color}; border-top-left-radius : 10px;border-top-right-radius : 10px;border-bottom-left-radius:10px;border-bottom-right-radius : 10px;")
             self.main_ui.start_game.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.login_ui.microsoft.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.login_ui.offline.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
@@ -425,6 +535,9 @@ class Ui(QMainWindow):
             self.settings_ui.name_2.setStyleSheet(f"color: {settings_item_text_color}")
             self.settings_ui.theme_button.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
             self.settings_ui.hide_window_button.setStyleSheet(f"background-color: {button_color}; border-radius: {button_border_radius}; color: {button_text_color}")
+            self.main_ui.frame_3.setStyleSheet(f"background-color: {frame_color}; border-radius: 10px")
+            self.main_ui.label.setStyleSheet(f"color: {logo_color}")
+            self.playlists_ui.label.setStyleSheet(f"color: {logo_color}")
             print("Theme applied successfully")
         except Exception as e:
             print(f"Failed to apply theme: {e}")
